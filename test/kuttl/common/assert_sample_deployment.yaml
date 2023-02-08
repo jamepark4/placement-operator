@@ -1,4 +1,5 @@
 apiVersion: placement.openstack.org/v1beta1
+kind: PlacementAPI
 metadata:
   finalizers:
   - PlacementAPI
@@ -77,7 +78,7 @@ spec:
           value: openstack
         - name: OPERATOR_CONDITION_NAME
           value: placement-operator.v0.0.1
-        image: quay.io/openstack-k8s-operators/placement-operator@sha256:current-tripleo
+        image: quay.io/openstack-k8s-operators/placement-operator:current-tripleo
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -221,3 +222,21 @@ spec:
   to:
     kind: Service
     name: placement-public
+---
+# the actual addresses of the apiEndpoints are platform specific, so we can't rely on
+# kuttl asserts to check them. This short script gathers the addresses and checks that
+# the three endpoints are defined and their addresses follow the default pattern
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+namespaced: true
+commands:
+  - script: |
+      template='{{.status.apiEndpoint.admin}}{{":"}}{{.status.apiEndpoint.internal}}{{":"}}{{.status.apiEndpoint.public}}{{"\n"}}'
+      regex="http:\/\/placement-admin-openstack\.apps.*:http:\/\/placement-internal-openstack\.apps.*:http:\/\/placement-public-openstack\.apps.*"
+      apiEndpoints=$(oc get -n openstack PlacementAPI  placement -o go-template="$template")
+      matches=$(echo "$apiEndpoints" | sed -e "s?$regex??")
+      if [ -z "$matches" ]; then
+        exit 0
+      else
+        exit 1
+      fi
