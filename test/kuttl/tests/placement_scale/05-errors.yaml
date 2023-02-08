@@ -119,3 +119,4 @@ spec:
   to:
     kind: Service
     name: placement-public
+
