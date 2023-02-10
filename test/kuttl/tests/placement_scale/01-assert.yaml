@@ -1,1 +1,242 @@
-../../common/assert_sample_deployment.yaml
+apiVersion: placement.openstack.org/v1beta1
+kind: PlacementAPI
+metadata:
+  finalizers:
+  - PlacementAPI
+  name: placement
+  namespace: openstack
+spec:
+  containerImage: quay.io/tripleozedcentos9/openstack-placement-api:current-tripleo
+  customServiceConfig: |
+    [DEFAULT]
+    debug = true
+  databaseInstance: openstack
+  databaseUser: placement
+  debug:
+    dbSync: false
+    service: false
+  passwordSelectors:
+    database: PlacementDatabasePassword
+    service: PlacementPassword
+  preserveJobs: false
+  replicas: 1
+  secret: osp-secret
+  serviceUser: placement
+status:
+  databaseHostname: openstack
+  readyCount: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placement-operator-controller-manager
+  namespace: openstack
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: placement
+        app.kubernetes.io/name: placement-operator
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=0
+        env:
+        - name: WATCH_NAMESPACE
+          value: openstack
+        - name: OPERATOR_CONDITION_NAME
+          value: placement-operator.v0.0.1
+        image: gcr.io/kubebuilder/kube-rbac-proxy:current-tripleo
+        imagePullPolicy: IfNotPresent
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        command:
+        - /manager
+        env:
+        - name: WATCH_NAMESPACE
+          value: openstack
+        - name: OPERATOR_CONDITION_NAME
+          value: placement-operator.v0.0.1
+        image: quay.io/openstack-k8s-operators/placement-operator:current-tripleo
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: manager
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsNonRoot: true
+      serviceAccount: placement-operator-controller-manager
+      serviceAccountName: placement-operator-controller-manager
+status:
+  replicas: 1
+  unavailableReplicas: 1
+  updatedReplicas: 1
+---
+# the openshift annotations can't be checked through the deployment above
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    openshift.io/scc: anyuid
+  labels:
+    service: placement
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    admin: "true"
+    service: placement
+  name: placement-admin
+  namespace: openstack
+spec:
+  ports:
+    - name: placement-admin
+  selector:
+    service: placement
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    internal: "true"
+    service: placement
+  name: placement-internal
+  namespace: openstack
+spec:
+  ports:
+    - name: placement-internal
+  selector:
+    service: placement
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    public: "true"
+    service: placement
+  name: placement-public
+  namespace: openstack
+spec:
+  ports:
+    - name: placement-public
+  selector:
+    service: placement
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: placement-admin
+  labels:
+    admin: "true"
+    service: placement
+  namespace: openstack
+spec:
+  port:
+    targetPort: placement-admin
+  to:
+    kind: Service
+    name: placement-admin
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: placement-internal
+  labels:
+    internal: "true"
+    service: placement
+  namespace: openstack
+spec:
+  port:
+    targetPort: placement-internal
+  to:
+    kind: Service
+    name: placement-internal
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: placement-public
+  labels:
+    public: "true"
+    service: placement
+  namespace: openstack
+spec:
+  port:
+    targetPort: placement-public
+  to:
+    kind: Service
+    name: placement-public
+---
+# the actual addresses of the apiEndpoints are platform specific, so we can't rely on
+# kuttl asserts to check them. This short script gathers the addresses and checks that
+# the three endpoints are defined and their addresses follow the default pattern
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+namespaced: true
+commands:
+  - script: |
+      template='{{.status.apiEndpoint.admin}}{{":"}}{{.status.apiEndpoint.internal}}{{":"}}{{.status.apiEndpoint.public}}{{"\n"}}'
+      regex="http:\/\/placement-admin-openstack\.apps.*:http:\/\/placement-internal-openstack\.apps.*:http:\/\/placement-public-openstack\.apps.*"
+      apiEndpoints=$(oc get -n openstack PlacementAPI  placement -o go-template="$template")
+      matches=$(echo "$apiEndpoints" | sed -e "s?$regex??")
+      if [ -z "$matches" ]; then
+        exit 0
+      else
+        exit 1
+      fi
