@@ -51,7 +51,7 @@ spec:
           value: openstack
         - name: OPERATOR_CONDITION_NAME
           value: placement-operator.v0.0.1
-        image: gcr.io/kubebuilder/kube-rbac-proxy:current-tripleo
+        image: gcr.io/kubebuilder/kube-rbac-proxy@sha256:d99a8d144816b951a67648c12c0b988936ccd25cf3754f3cd85ab8c01592248f
         imagePullPolicy: IfNotPresent
         name: kube-rbac-proxy
         ports:
