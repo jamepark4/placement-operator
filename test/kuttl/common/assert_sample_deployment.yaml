@@ -230,12 +230,8 @@ kind: TestAssert
 namespaced: true
 commands:
   - script: |
-      template='{{.status.apiEndpoint.admin}}{{":"}}{{.status.apiEndpoint.internal}}{{":"}}{{.status.apiEndpoint.public}}{{"\n"}}'
-      regex="http:\/\/placement-admin-openstack\.apps.*:http:\/\/placement-internal-openstack\.apps.*:http:\/\/placement-public-openstack\.apps.*"
-      apiEndpoints=$(oc get -n openstack PlacementAPI  placement -o go-template="$template")
-      matches=$(echo "$apiEndpoints" | sed -e "s?$regex??")
-      if [ -z "$matches" ]; then
-        exit 0
-      else
-        exit 1
-      fi
+      bash ../lib/helper_functions.sh assert_regex ../go_templates/apiEndpoints.gotemplate "http:\/\/placement-admin-openstack\.apps.*"
+  - script: |
+      bash ../lib/helper_functions.sh assert_regex ../go_templates/apiEndpoints.gotemplate "http:\/\/placement-internal-openstack\.apps.*"
+  - script: |
+      bash ../lib/helper_functions.sh assert_regex ../go_templates/apiEndpoints.gotemplate "http:\/\/placement-public-openstack\.apps.*"
