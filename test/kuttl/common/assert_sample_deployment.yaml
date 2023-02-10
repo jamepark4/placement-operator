@@ -120,9 +120,8 @@ spec:
       serviceAccount: placement-operator-controller-manager
       serviceAccountName: placement-operator-controller-manager
 status:
+  availableReplicas: 1
   replicas: 1
-  unavailableReplicas: 1
-  updatedReplicas: 1
 ---
 # the openshift annotations can't be checked through the deployment above
 apiVersion: v1
