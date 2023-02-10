@@ -78,7 +78,7 @@ spec:
           value: openstack
         - name: OPERATOR_CONDITION_NAME
           value: placement-operator.v0.0.1
-        image: quay.io/openstack-k8s-operators/placement-operator:current-tripleo
+        image: quay.io/openstack-k8s-operators/placement-operator@sha256:96c8ac39657960b6720e851f2d976fd930cbdfaa564c8345f3f204b36c911ac3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
