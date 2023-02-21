@@ -27,10 +27,6 @@ spec:
     database: PlacementDatabasePassword
   preserveJobs: false
   replicas: 0
-  resources:
-    requests:
-      cpu: "1.0"
-      memory: 500Mi
   secret: osp-secret
 status:
   databaseHostname: openstack

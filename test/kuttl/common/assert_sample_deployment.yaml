@@ -132,6 +132,8 @@ metadata:
     openshift.io/scc: anyuid
   labels:
     service: placement
+status:
+  phase: Running
 ---
 apiVersion: v1
 kind: Service
