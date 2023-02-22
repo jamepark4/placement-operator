@@ -248,6 +248,6 @@ kind: TestAssert
 namespaced: true
 commands:
   - command: mkdir -p int-tests-output
-  - command: source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate "http:\/\/placement-admin-openstack\.apps.*" > int-tests-output/endpoint_regex_check.logs
-  - command: source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate "http:\/\/placement-internal-openstack\.apps.*" >> int-tests-output/endpoint_regex_check.logs
-  - command: source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate "http:\/\/placement-public-openstack\.apps.*" >> int-tests-output/endpoint_regex_check.logs
+  - command: bash -c "source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate 'http:\/\/placement-admin-openstack\.apps.*' | adddate > int-tests-output/endpoint_regex_check.logs"
+  - command: bash -c "source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate 'http:\/\/placement-internal-openstack\.apps.*' | >> adddate int-tests-output/endpoint_regex_check.logs"
+  - command: bash -c "source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate 'http:\/\/placement-public-openstack\.apps.*' | adddate >> int-tests-output/endpoint_regex_check.logs"
