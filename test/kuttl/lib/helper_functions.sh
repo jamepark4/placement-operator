@@ -2,7 +2,8 @@
 
 assert_regex() {
 
-    apiEndpoints=$(oc get -n openstack KeystoneAPI  keystone -o go-template="$1")
+    apiEndpoints=$(oc get -n openstack PlacementAPI  placement -o go-template-file="$1")
+    echo $apiEndpoints
     matches=$(echo "$apiEndpoints" | sed -e "s?$2??")
     if [ -z "$matches" ]; then
         exit 0
@@ -10,3 +11,5 @@ assert_regex() {
         exit 1
     fi
 }
+
+"$@"
