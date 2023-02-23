@@ -247,7 +247,9 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestAssert
 namespaced: true
 commands:
-  - command: mkdir -p int-tests-output
-  - command: bash -c "source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate 'http:\/\/placement-admin-openstack\.apps.*' | adddate > int-tests-output/endpoint_regex_check.logs"
-  - command: bash -c "source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate 'http:\/\/placement-internal-openstack\.apps.*' | adddate >> int-tests-output/endpoint_regex_check.logs"
-  - command: bash -c "source $HELPER_FUNCTIONS_PATH/helper_functions.sh && assert_regex $OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate 'http:\/\/placement-public-openstack\.apps.*' | adddate >> int-tests-output/endpoint_regex_check.logs"
+  - script: |
+      source $HELPER_FUNCTIONS_PATH/helper_functions.sh
+      apiEndpoints=$(oc get -n openstack PlacementAPI placement -o go-template-file=$OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate)
+      assert_regex $apiEndpoints 'http:\/\/placement-admin-openstack\.apps.*'
+      assert_regex $apiEndpoints 'http:\/\/placement-internal-openstack\.apps.*'
+      assert_regex $apiEndpoints 'http:\/\/placement-public-openstack\.apps.*'
