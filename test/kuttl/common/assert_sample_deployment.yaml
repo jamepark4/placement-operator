@@ -25,6 +25,9 @@ spec:
 status:
   databaseHostname: openstack
   readyCount: 1
+  conditions:
+    reason: Ready
+    status: "True"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -139,21 +142,6 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    admin: "true"
-    service: placement
-  name: placement-admin
-  namespace: openstack
-spec:
-  ports:
-    - name: placement-admin
-  selector:
-    service: placement
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
     internal: "true"
     service: placement
   name: placement-internal
@@ -179,26 +167,6 @@ spec:
   selector:
     service: placement
   type: ClusterIP
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: placement-admin
-  labels:
-    admin: "true"
-    service: placement
-  namespace: openstack
-spec:
-  port:
-    targetPort: placement-admin
-  to:
-    kind: Service
-    name: placement-admin
-status:
-  ingress:
-  - conditions:
-    - status: "True"
-      type: Admitted
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -250,6 +218,5 @@ commands:
   - script: |
       source $HELPER_FUNCTIONS_PATH/helper_functions.sh
       apiEndpoints=$(oc get -n openstack PlacementAPI placement -o go-template-file=$OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate)
-      assert_regex $apiEndpoints 'http:\/\/placement-admin-openstack\.apps.*'
       assert_regex $apiEndpoints 'http:\/\/placement-internal-openstack\.apps.*'
       assert_regex $apiEndpoints 'http:\/\/placement-public-openstack\.apps.*'
