@@ -218,5 +218,5 @@ commands:
   - script: |
       source $HELPER_FUNCTIONS_PATH/helper_functions.sh
       apiEndpoints=$(oc get -n openstack PlacementAPI placement -o go-template-file=$OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate)
-      assert_regex $apiEndpoints 'http:\/\/placement-internal-openstack\.apps.*'
+      assert_regex $apiEndpoints 'http:\/\/placement-internal\.openstack\.svc.*'
       assert_regex $apiEndpoints 'http:\/\/placement-public-openstack\.apps.*'
