@@ -193,7 +193,7 @@ kind: TestAssert
 namespaced: true
 commands:
   - script: |
-      source $HELPER_FUNCTIONS_PATH/helper_functions.sh
-      apiEndpoints=$(oc get -n openstack PlacementAPI placement -o go-template-file=$OC_OUTPUT_TEMPLATES_PATH/apiEndpoints.gotemplate)
+      source $OPERATOR_BASE_DIR/placement-operator/test/kuttl/lib/helper_functions.sh
+      apiEndpoints=$(oc get -n openstack PlacementAPI placement -o go-template-file=$OPERATOR_BASE_DIR/placement-operator/test/kuttl/go_templates/apiEndpoints.gotemplate)
       assert_regex $apiEndpoints 'http:\/\/placement-internal\.openstack\.svc.*'
       assert_regex $apiEndpoints 'http:\/\/placement-public-openstack\.apps.*'
